@@ -1,27 +1,19 @@
-puts "enter the attacker's UPP"
-statAtt = gets
-statAtt = statAtt.to_i
+puts "enter your UPP"
+hold = gets.upcase
+upp = hold.split(//)
+upp.pop
 
-puts "enter the UPP for the one getting attacked or whatever"
-statVic = gets
-statVic = statVic.to_i
+options = ['A','B','C','D','E','F','1','2','3','4','5','6','7','8','9']
+extras = (upp - options)
 
-puts "enter the weapon. Type 'What?' for a list of weapons"
-theWeapon = gets
-puts theWeapon
-if(theWeapon == "What?")
-  puts "... put a list of weapons here later..."
+def hexCheck(upp, extras)
+  if extras.length != 0
+    puts "invalid UPP"
+  elsif (upp.length) != 6
+    puts "invalid UPP"
+  else
+    puts "okay"
+  end
 end
-# later check theWeapon against the list of weapons and prompt again if no match
 
-puts "enter the range"
-theRange = gets
-theRange = theRange.to_i
-
-#check for attacker DMs using the weapon
-#'roll' for accuracy
-#roll for damage
-#roll to randomize UPP hit
-#decrement UPP and output
-
-#allow a continuous combat mode? Which keeps track of UPPs?
+hexCheck(upp, extras)
