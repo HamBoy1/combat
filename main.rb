@@ -6,7 +6,7 @@ runs = 1
 while keepGoing do
   puts "enter the name of opponent #{runs}"
   opponents << gets.chomp
-  puts "keep going?"
+  puts "add another opponent?"
   hold = gets.upcase.chomp
   runs = runs + 1
   if hold == "NO"
@@ -32,6 +32,7 @@ notDone = false
 puts ""
 loop do
   for name in opponents
+    puts""
     puts "enter upp for #{name}"
     hold = gets.upcase
     upp = hold.split(//)
@@ -65,6 +66,34 @@ def changeChange (oppsUpps, flips)
 end
 
 changeChange(oppsUpps, flips)
+#########################################################
+#armor stuff#
+puts ""
+armorOptions = ["NOTHING","JACK","MESH","CLOTH","REFLEC","ABLAT","VACCSUIT","COMBATARMOR","BATTLEDRESS"]
+playerArmor = Array.new
+
+for name in opponents
+  allGood = false
+  until allGood == true do
+    puts ""
+    puts "what armor is #{name} wearing? (enter 'help' for a list of armor)"
+    armor = gets.chomp.upcase
+
+    if armor == "HELP"
+      puts armorOptions
+      allGood = false
+    elsif !armorOptions.include?(armor)
+      puts "invalid armor"
+      allGood = false
+    else
+      puts "valid armor"
+      allGood = true
+    end
+  end
+  playerArmor << armor
+end
+
+
 
 #########################################################
 #arrays of weapons and dm check values
@@ -96,9 +125,11 @@ until allGood == true do
     allGood = false
   elsif !weaponOptions.include?(weapon)
     puts "invalid weapon"
+    puts ""
     allGood = false
   else
     puts "valid weapon"
+    puts ""
     allGood = true
   end
 end
@@ -118,8 +149,6 @@ else
   puts "okie dokie"
 end
 
-#########################################################
-#armor stuff#
 #########################################################
 #doing things#
 
@@ -143,7 +172,7 @@ def damageCheck(weapon, weaponOptions, weaponDamageRoll, oppsUpps, victim, blowD
 
   totalDamage = baseDamage + blowDM #+ gunDM - armor
 
-  puts oppsUpps[victim][rand(2)].to_i #- totalDamage
+  #puts oppsUpps[victim][rand(2)].to_i #- totalDamage
 end
 
 damageCheck(weapon, weaponOptions, weaponDamageRoll, oppsUpps, victim, blowDM)
