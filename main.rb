@@ -73,6 +73,7 @@ requiredCheck = [6,0,0,0,0,0,0,5,4,5,5,7,6,8,5,5,6,7,5]
 advantageousCheck = [9,0,0,0,0,0,0,8,8,9,10,11,10,12,9,8,10,10,8]
 advantageousBlow = [1,0,0,0,0,0,0,2,2,1,1,2,1,2,2,2,2,2,2]
 weakenedBlow = [2,0,0,0,0,0,0,1,2,2,2,4,3,4,2,3,3,3,1]
+weaponDamageRoll = [1,2,2,2,2,3,2,2,2,2,1,3,2,4,3,2,3,3,2]
 
 #gets the fighters for one combat round
 fighters = Array.new
@@ -133,10 +134,16 @@ else
   puts "rolled #{accuracy} on accuracy check. Miss."
 end
 
-#def damageCheck()
+def damageCheck(weapon, weaponOptions, weaponDamageRoll, oppsUpps, victim, blowDM)
+  numDice = weaponDamageRoll[weaponOptions.index(weapon)]
+  baseDamage = 0
+  numDice.times do
+    baseDamage = baseDamage + (1+rand(6))
+  end
 
-  #damage = roll the right amount of dice + blowDM
+  totalDamage = baseDamage + blowDM #+ gunDM - armor
 
-  puts oppsUpps[victim][rand(3)].to_i #- damage
+  puts oppsUpps[victim][rand(2)].to_i #- totalDamage
+end
 
-#end
+damageCheck(weapon, weaponOptions, weaponDamageRoll, oppsUpps, victim, blowDM)
