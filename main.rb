@@ -69,7 +69,7 @@ changeChange(oppsUpps, flips)
 #########################################################
 #armor stuff#
 puts ""
-armorOptions = ["NOTHING","JACK","MESH","CLOTH","REFLEC","ABLAT","VACCSUIT","COMBATARMOR","BATTLEDRESS"]
+armorOptions = ["NOTHING","JACK","MESH","CLOTH","REFLEC","ABLAT","VACC SUIT","COMBAT ARMOR","BATTLE DRESS"]
 playerArmor = Array.new
 
 for name in opponents
@@ -101,8 +101,15 @@ weaponOptions = ['HANDS','CLAWS','TEETH','HORNS','HOOVES','STINGER','THRASHER','
 requiredCheck = [6,0,0,0,0,0,0,5,4,5,5,7,6,8,5,5,6,7,5]
 advantageousCheck = [9,0,0,0,0,0,0,8,8,9,10,11,10,12,9,8,10,10,8]
 advantageousBlow = [1,0,0,0,0,0,0,2,2,1,1,2,1,2,2,2,2,2,2]
+tooLowBlow = [2,0,0,0,0,0,0,4,2,2,1,2,2,4,2,1,2,3,1]
 weakenedBlow = [2,0,0,0,0,0,0,1,2,2,2,4,3,4,2,3,3,3,1]
 weaponDamageRoll = [1,2,2,2,2,3,2,2,2,2,1,3,2,4,3,2,3,3,2]
+
+gunOptions = ['BODY PISTOL','AUTOMATIC PISTOL','REVOLVER','CARBINE','RIFLE','AUTOMATIC RIFLE','SHOTGUN','SUBMACHINEGUN','LASER CARBINE','LASER RIFLE']
+gunRequiredCheck = [8,7,7,5,6,7,4,6,6,7]
+gunAdvantageousCheck = [11,10,9,9,8,10,9,9,10,11]
+gunTooLowShot = [3,2,2,1,2,2,1,2,3]
+gunAdvantageousShot = [1,1,1,1,1,2,1,2,2]
 
 #gets the fighters for one combat round
 fighters = Array.new
@@ -122,8 +129,10 @@ until allGood == true do
 
   if weapon == "HELP"
     puts weaponOptions
+    puts ""
+    puts gunOptions
     allGood = false
-  elsif !weaponOptions.include?(weapon)
+  elsif !weaponOptions.include?(weapon) && !gunOptions.include?(weapon)
     puts "invalid weapon"
     puts ""
     allGood = false
@@ -134,7 +143,10 @@ until allGood == true do
   end
 end
 
-#checks for strength dms by weapon
+
+endurance = oppsUpps[attacker][1]
+
+#checks for blow dms by strength
 strength = oppsUpps[attacker][0]
 spot = weaponOptions.index(weapon)
 blowDM = 0
@@ -143,15 +155,29 @@ if (strength.to_i >= advantageousCheck.fetch(spot))
   blowDM = advantageousBlow.fetch(spot)
   puts "strength advantage of +#{blowDM} to blow"
 elsif (strength.to_i < requiredCheck.fetch(spot))
-  blowDM = 0 - weakenedBlow.fetch(spot)
+  blowDM = 0 - tooLowBlow.fetch(spot)
   puts "not strong enough. Deal a weakened blow with DM of #{blowDM}"
+elsif (endurance.to_i >= 0)
+  blowDM = 0 - weakenedBlow.fetch(spot)
 else
   puts "okie dokie"
 end
 
+#checks for shot dms by dexterity
+dexterity = oppsUpps[attacker][1]
+spot = gunOptions.index(weapon)
+shotDM = 0
+
+if (dexterity.to_i >= gunAdvantageousCheck.fetch(spot))
+  shotDM = gunAdvantageousShot.fetch(spot)
+  puts "dexterity advantage of +#{shotDM} to blow"
+elsif (dexterity.to_i < gunRequiredCheck.fetch(spot))
+  shotDM = 0 - gunTooLowShot.fetch(spot)
+  puts "not dextrous enough. Deal a weakened blow with DM of #{shotDM}"
+end
+
 #########################################################
 #doing things#
-
 
 #roll for accuracy
 accuracy = 1 + rand(20)
@@ -170,7 +196,7 @@ def damageCheck(weapon, weaponOptions, weaponDamageRoll, oppsUpps, victim, blowD
     baseDamage = baseDamage + (1+rand(6))
   end
 
-  totalDamage = baseDamage + blowDM #+ gunDM - armor
+  totalDamage = baseDamage + blowDM + shotDM #- armor
 
   #puts oppsUpps[victim][rand(2)].to_i #- totalDamage
 end
