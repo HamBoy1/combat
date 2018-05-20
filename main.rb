@@ -69,7 +69,15 @@ changeChange(oppsUpps, flips)
 #########################################################
 #armor stuff#
 puts ""
-armorOptions = ["NOTHING","JACK","MESH","CLOTH","REFLEC","ABLAT","VACC SUIT","COMBAT ARMOR","BATTLE DRESS"]
+armorOptions = ["NOTHING","JACK","MESH","CLOTH","REFLEC","ABLAT","COMBAT ARMOR"]
+armorDMS = [[1,3,2,2,3,4,7,0,0,1,2,4,3,5,2,1,4,1,0,0,1,1,2,3,6,5,5,2,3], #nothing
+            [-1,0,1,1,3,3,7,0,-1,0,0,3,3,5,1,0,3,0,0,0,1,1,2,3,6,5,5,2,3], #jack
+            [-4,0,1,0,2,0,4,-2,-4,-4,-4,-2,-3,1,0,-2,-2,-2,-2,-2,-1,-1,0,0,2,-1,0,1,2], #mesh
+            [-4,1,0,-1,2,1,4,-3,-4,-4,-3,-3,-3,0,-1,-2,-3,-2,-3,-4,-3,-3,-3,-3,-1,-3,-3,1,2], #cloth
+            [0,-1,-2,2,3,2,7,0,0,1,2,4,3,5,2,-1,4,-1,0,-4,1,1,2,2,6,5,5,-8,-8], #reflec
+            [-1,-3,-4,-2,2,0,4,-2,-2,-3,-2,-2,-2,1,-2,-3,-2,-3,-2,-2,-1,-1,-1,1,3,2,2,-7,-7], #ablat
+            [-6,-7,-7,-5,-6,-6,0,-7,-7,-5,-8,-6,-6,-4,-6,-6,-5,-6,-7,-7,-5,-5,-5,-5,-3,-5,-4,-6,-6]] #combat
+
 playerArmor = Array.new
 
 for name in opponents
@@ -94,7 +102,6 @@ for name in opponents
 end
 
 
-
 #########################################################
 #arrays of weapons and dm check values
 weaponOptions = ['HANDS','CLAWS','TEETH','HORNS','HOOVES','STINGER','THRASHER','CLUB','DAGGER','BLADE','FOIL','CUTLASS','SWORD','BROADSWORD','BAYONET','SPEAR','HALBERD','PIKE','CUDGEL']
@@ -110,6 +117,7 @@ gunRequiredCheck = [8,7,7,5,6,7,4,6,6,7]
 gunAdvantageousCheck = [11,10,9,9,8,10,9,9,10,11]
 gunTooLowShot = [3,2,2,1,2,2,1,2,3]
 gunAdvantageousShot = [1,1,1,1,1,2,1,2,2]
+gunDamageRoll = [3,3,3,3,3,3,4,3,4,5]
 
 #gets the fighters for one combat round
 fighters = Array.new
@@ -143,62 +151,94 @@ until allGood == true do
   end
 end
 
-
 endurance = oppsUpps[attacker][1]
 
 #checks for blow dms by strength
-strength = oppsUpps[attacker][0]
-spot = weaponOptions.index(weapon)
-blowDM = 0
 
-if (strength.to_i >= advantageousCheck.fetch(spot))
-  blowDM = advantageousBlow.fetch(spot)
-  puts "strength advantage of +#{blowDM} to blow"
-elsif (strength.to_i < requiredCheck.fetch(spot))
-  blowDM = 0 - tooLowBlow.fetch(spot)
-  puts "not strong enough. Deal a weakened blow with DM of #{blowDM}"
-elsif (endurance.to_i >= 0)
-  blowDM = 0 - weakenedBlow.fetch(spot)
-else
-  puts "okie dokie"
-end
+######################################################################################################HEY! WHAT YOU
+#NEED TO DO NOW IS MAKE IT CHECK ONLY GUN /OR/ WEAPON BUT NOT BOTH OR IT RETURNS NIL
 
 #checks for shot dms by dexterity
-dexterity = oppsUpps[attacker][1]
-spot = gunOptions.index(weapon)
+blowDM = 0
 shotDM = 0
 
-if (dexterity.to_i >= gunAdvantageousCheck.fetch(spot))
-  shotDM = gunAdvantageousShot.fetch(spot)
-  puts "dexterity advantage of +#{shotDM} to blow"
-elsif (dexterity.to_i < gunRequiredCheck.fetch(spot))
-  shotDM = 0 - gunTooLowShot.fetch(spot)
-  puts "not dextrous enough. Deal a weakened blow with DM of #{shotDM}"
+if weaponOptions.include?(weapon)
+  strength = oppsUpps[attacker][0]
+  spot = weaponOptions.index(weapon)
+  if (strength.to_i >= advantageousCheck.fetch(spot))
+    blowDM = advantageousBlow.fetch(spot)
+    puts "strength advantage of +#{blowDM} to blow"
+  elsif (strength.to_i < requiredCheck.fetch(spot))
+    blowDM = 0 - tooLowBlow.fetch(spot)
+    puts "not strong enough. Deal a weakened blow with DM of #{blowDM}"
+  elsif (endurance.to_i >= 0)
+    blowDM = 0 - weakenedBlow.fetch(spot)
+  else
+    puts "okie dokie"
+  end
+else
+  dexterity = oppsUpps[attacker][1]
+  spot = gunOptions.index(weapon)
+  if (dexterity.to_i >= gunAdvantageousCheck.fetch(spot))
+    shotDM = gunAdvantageousShot.fetch(spot)
+    puts "dexterity advantage of +#{shotDM} to blow"
+  elsif (dexterity.to_i < gunRequiredCheck.fetch(spot))
+    shotDM = 0 - gunTooLowShot.fetch(spot)
+    puts "not dextrous enough. Deal a weakened blow with DM of #{shotDM}"
+  end
 end
+
 
 #########################################################
 #doing things#
 
-#roll for accuracy
-accuracy = 1 + rand(20)
-if accuracy == 20
-  puts "rolled a 20 on accuracy check. Yeehaw."
-elsif accuracy >= 8
-  puts "rolled #{accuracy} on accuracy check. Hit."
-else
-  puts "rolled #{accuracy} on accuracy check. Miss."
-end
+#gets dm based on armor
 
-def damageCheck(weapon, weaponOptions, weaponDamageRoll, oppsUpps, victim, blowDM)
-  numDice = weaponDamageRoll[weaponOptions.index(weapon)]
+armor = playerArmor[victim]
+armorSpot = armorOptions.index(armor)
+if weaponOptions.include?(weapon)
+  weaponSpot = weaponOptions.index(weapon)
+else
+  weaponSpot = gunOptions.index(weapon)
+end
+defenseDM = armorDMS[armorSpot][weaponSpot]
+
+
+def damageCheck(weapon, weaponOptions, gunOptions, weaponDamageRoll, gunDamageRoll, oppsUpps, victim, blowDM, shotDM, defenseDM, opponents)
+
+  if weaponOptions.include?(weapon)
+    numDice = weaponDamageRoll[weaponOptions.index(weapon)]
+  else
+    numDice = gunDamageRoll[gunOptions.index(weapon)]
+  end
+
   baseDamage = 0
   numDice.times do
     baseDamage = baseDamage + (1+rand(6))
   end
 
-  totalDamage = baseDamage + blowDM + shotDM #- armor
+  totalDamage = baseDamage + blowDM + shotDM + defenseDM
 
-  #puts oppsUpps[victim][rand(2)].to_i #- totalDamage
+  puts "blowDM = #{blowDM}"
+  puts "shotDM = #{shotDM}"
+  puts "defenseDM = #{defenseDM}"
+  puts "rolled damage = #{baseDamage}"
+  puts "total damage = #{totalDamage}"
+
+  trait = rand(2)
+  oppsUpps[victim][trait] = oppsUpps[victim][trait].to_i - totalDamage
+  puts "#{opponents[victim]}'s upp now = #{oppsUpps[victim]}'"
 end
 
-damageCheck(weapon, weaponOptions, weaponDamageRoll, oppsUpps, victim, blowDM)
+
+#roll for accuracy
+accuracy = 1 + rand(20)
+if accuracy == 20
+  puts "rolled a 20 on accuracy check. Yeehaw."
+  damageCheck(weapon, weaponOptions, gunOptions, weaponDamageRoll, gunDamageRoll, oppsUpps, victim, blowDM, shotDM, defenseDM, opponents)
+elsif accuracy >= 8
+  puts "rolled #{accuracy} on accuracy check. Hit."
+  damageCheck(weapon, weaponOptions, gunOptions, weaponDamageRoll, gunDamageRoll, oppsUpps, victim, blowDM, shotDM, defenseDM, opponents)
+else
+  puts "rolled #{accuracy} on accuracy check. Miss."
+end
