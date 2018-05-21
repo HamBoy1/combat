@@ -101,7 +101,6 @@ for name in opponents
   playerArmor << armor
 end
 
-
 #########################################################
 #arrays of weapons and dm check values
 weaponOptions = ['HANDS','CLAWS','TEETH','HORNS','HOOVES','STINGER','THRASHER','CLUB','DAGGER','BLADE','FOIL','CUTLASS','SWORD','BROADSWORD','BAYONET','SPEAR','HALBERD','PIKE','CUDGEL']
@@ -119,39 +118,45 @@ gunTooLowShot = [3,2,2,1,2,2,1,2,3]
 gunAdvantageousShot = [1,1,1,1,1,2,1,2,2]
 gunDamageRoll = [3,3,3,3,3,3,4,3,4,5]
 
+
+###
 #gets the fighters for one combat round
-fighters = Array.new
-puts ""
-puts "who's attacking who? (format as [name] attacks [name])"
-fighters = gets.chomp
-fighters = fighters.split(" attacks ")
 
-attacker = opponents.index(fighters[0])
-victim = opponents.index(fighters[1])
+def getFighters(opponents)
+  $fighters = Array.new
+  puts ""
+  puts "who's attacking who? (format as [name] attacks [name])"
+  $fighters = gets.chomp
+  $fighters = $fighters.split(" attacks ")
 
-#gets the weapon for the attacker
-allGood = false
-until allGood == true do
-  puts "what weapon is #{fighters[0]} using? (enter 'help' for a list of weapons)"
-  weapon = gets.chomp.upcase
 
-  if weapon == "HELP"
-    puts weaponOptions
-    puts ""
-    puts gunOptions
-    allGood = false
-  elsif !weaponOptions.include?(weapon) && !gunOptions.include?(weapon)
-    puts "invalid weapon"
-    puts ""
-    allGood = false
-  else
-    puts "valid weapon"
-    puts ""
-    allGood = true
-  end
+  @attacker = opponents.index($fighters[0])
+  @victim = opponents.index($fighters[1])
 end
 
-endurance = oppsUpps[attacker][1]
+#gets the weapon for the attacker
+def getWeapon(weaponOptions, gunOptions)
+  allGood = false
+  until allGood == true do
+    puts "what weapon is #{$fighters[0]} using? (enter 'help' for a list of weapons)"
+    @weapon = gets.chomp.upcase
+
+    if @weapon == "HELP"
+      puts weaponOptions
+      puts ""
+      puts gunOptions
+      allGood = false
+    elsif !weaponOptions.include?(@weapon) && !gunOptions.include?(@weapon)
+      puts "invalid weapon"
+      puts ""
+      allGood = false
+    else
+      puts "valid weapon"
+      puts ""
+      allGood = true
+    end
+  end
+end
 
 #checks for blow dms by strength
 
@@ -159,57 +164,59 @@ endurance = oppsUpps[attacker][1]
 #NEED TO DO NOW IS MAKE IT CHECK ONLY GUN /OR/ WEAPON BUT NOT BOTH OR IT RETURNS NIL
 
 #checks for shot dms by dexterity
-blowDM = 0
-shotDM = 0
-
-if weaponOptions.include?(weapon)
-  strength = oppsUpps[attacker][0]
-  spot = weaponOptions.index(weapon)
-  if (strength.to_i >= advantageousCheck.fetch(spot))
-    blowDM = advantageousBlow.fetch(spot)
-    puts "strength advantage of +#{blowDM} to blow"
-  elsif (strength.to_i < requiredCheck.fetch(spot))
-    blowDM = 0 - tooLowBlow.fetch(spot)
-    puts "not strong enough. Deal a weakened blow with DM of #{blowDM}"
-  elsif (endurance.to_i >= 0)
-    blowDM = 0 - weakenedBlow.fetch(spot)
+def bonusCheck(weaponOptions, oppsUpps, advantageousCheck, advantageousBlow, requiredCheck, tooLowBlow, weakenedBlow, gunOptions, gunAdvantageousCheck, gunAdvantageousShot, gunRequiredCheck, gunTooLowShot)
+  @blowDM = 0
+  @shotDM = 0
+  if weaponOptions.include?(@weapon)
+    strength = oppsUpps[@attacker][0]
+    spot = weaponOptions.index(@weapon)
+    if (@endurance.to_i >= 0)
+      if (strength.to_i >= advantageousCheck.fetch(spot))
+        @blowDM = advantageousBlow.fetch(spot)
+        puts "strength advantage of +#{@blowDM} to blow"
+      elsif (strength.to_i < requiredCheck.fetch(spot))
+        @blowDM = 0 - tooLowBlow.fetch(spot)
+        puts "not strong enough. Deal a weakened blow with DM of #{@blowDM}"
+      else
+        puts "okie dokie"
+      end
+    else
+      @blowDM = 0 - weakenedBlow.fetch(spot)
+    end
   else
-    puts "okie dokie"
-  end
-else
-  dexterity = oppsUpps[attacker][1]
-  spot = gunOptions.index(weapon)
-  if (dexterity.to_i >= gunAdvantageousCheck.fetch(spot))
-    shotDM = gunAdvantageousShot.fetch(spot)
-    puts "dexterity advantage of +#{shotDM} to blow"
-  elsif (dexterity.to_i < gunRequiredCheck.fetch(spot))
-    shotDM = 0 - gunTooLowShot.fetch(spot)
-    puts "not dextrous enough. Deal a weakened blow with DM of #{shotDM}"
+    dexterity = oppsUpps[@attacker][1]
+    spot = gunOptions.index(@weapon)
+    if (dexterity.to_i >= gunAdvantageousCheck.fetch(spot))
+      @shotDM = gunAdvantageousShot.fetch(spot)
+      puts "dexterity advantage of +#{@shotDM} to blow"
+    elsif (dexterity.to_i < gunRequiredCheck.fetch(spot))
+      @shotDM = 0 - gunTooLowShot.fetch(spot)
+      puts "not dextrous enough. Deal a weakened blow with DM of #{@shotDM}"
+    end
   end
 end
-
 
 #########################################################
 #doing things#
 
 #gets dm based on armor
-
-armor = playerArmor[victim]
-armorSpot = armorOptions.index(armor)
-if weaponOptions.include?(weapon)
-  weaponSpot = weaponOptions.index(weapon)
-else
-  weaponSpot = gunOptions.index(weapon)
-end
-defenseDM = armorDMS[armorSpot][weaponSpot]
-
-
-def damageCheck(weapon, weaponOptions, gunOptions, weaponDamageRoll, gunDamageRoll, oppsUpps, victim, blowDM, shotDM, defenseDM, opponents)
-
-  if weaponOptions.include?(weapon)
-    numDice = weaponDamageRoll[weaponOptions.index(weapon)]
+def armorAdvan(playerArmor, armorOptions, weaponOptions, gunOptions, armorDMS)
+  armor = playerArmor[@victim]
+  armorSpot = armorOptions.index(armor)
+  if weaponOptions.include?(@weapon)
+    weaponSpot = weaponOptions.index(@weapon)
   else
-    numDice = gunDamageRoll[gunOptions.index(weapon)]
+    weaponSpot = gunOptions.index(@weapon)
+  end
+  @defenseDM = armorDMS[armorSpot][weaponSpot]
+end
+
+
+def damageCheck(weaponOptions, gunOptions, weaponDamageRoll, gunDamageRoll, oppsUpps, opponents)
+  if weaponOptions.include?(@weapon)
+    numDice = weaponDamageRoll[weaponOptions.index(@weapon)]
+  else
+    numDice = gunDamageRoll[gunOptions.index(@weapon)]
   end
 
   baseDamage = 0
@@ -217,28 +224,46 @@ def damageCheck(weapon, weaponOptions, gunOptions, weaponDamageRoll, gunDamageRo
     baseDamage = baseDamage + (1+rand(6))
   end
 
-  totalDamage = baseDamage + blowDM + shotDM + defenseDM
+  totalDamage = baseDamage + @blowDM + @shotDM + @defenseDM
 
-  puts "blowDM = #{blowDM}"
-  puts "shotDM = #{shotDM}"
-  puts "defenseDM = #{defenseDM}"
+  puts "blowDM = #{@blowDM}"
+  puts "shotDM = #{@shotDM}"
+  puts "defenseDM = #{@defenseDM}"
   puts "rolled damage = #{baseDamage}"
   puts "total damage = #{totalDamage}"
 
   trait = rand(2)
-  oppsUpps[victim][trait] = oppsUpps[victim][trait].to_i - totalDamage
-  puts "#{opponents[victim]}'s upp now = #{oppsUpps[victim]}'"
+  oppsUpps[@victim][trait] = oppsUpps[@victim][trait].to_i - totalDamage
+  puts "#{opponents[@victim]}'s upp now = #{oppsUpps[@victim]}'"
 end
 
-
 #roll for accuracy
-accuracy = 1 + rand(20)
-if accuracy == 20
-  puts "rolled a 20 on accuracy check. Yeehaw."
-  damageCheck(weapon, weaponOptions, gunOptions, weaponDamageRoll, gunDamageRoll, oppsUpps, victim, blowDM, shotDM, defenseDM, opponents)
-elsif accuracy >= 8
-  puts "rolled #{accuracy} on accuracy check. Hit."
-  damageCheck(weapon, weaponOptions, gunOptions, weaponDamageRoll, gunDamageRoll, oppsUpps, victim, blowDM, shotDM, defenseDM, opponents)
-else
-  puts "rolled #{accuracy} on accuracy check. Miss."
+def accuracyCheck(weaponOptions, gunOptions, weaponDamageRoll, gunDamageRoll, oppsUpps, opponents)
+  accuracy = 1 + rand(20)
+  if accuracy == 20
+    puts "rolled a 20 on accuracy check. Yeehaw."
+    damageCheck(weaponOptions, gunOptions, weaponDamageRoll, gunDamageRoll, oppsUpps, opponents)
+  elsif accuracy >= 8
+    puts "rolled #{accuracy} on accuracy check. Hit."
+    damageCheck(weaponOptions, gunOptions, weaponDamageRoll, gunDamageRoll, oppsUpps, opponents)
+  else
+    puts "rolled #{accuracy} on accuracy check. Miss."
+  end
+end
+
+loop do
+  puts ""
+  puts "begin combat round?"
+  roundAnswer = gets.chomp.upcase
+  if roundAnswer == "YES"
+    getFighters(opponents)
+    @endurance = oppsUpps[@attacker][1]
+    getWeapon(weaponOptions, gunOptions)
+    bonusCheck(weaponOptions, oppsUpps, advantageousCheck, advantageousBlow, requiredCheck, tooLowBlow, weakenedBlow, gunOptions, gunAdvantageousCheck, gunAdvantageousShot, gunRequiredCheck, gunTooLowShot)
+    armorAdvan(playerArmor, armorOptions, weaponOptions, gunOptions, armorDMS)
+    accuracyCheck(weaponOptions, gunOptions, weaponDamageRoll, gunDamageRoll, oppsUpps, opponents)
+  else
+    puts "ending combat"
+    break
+  end
 end
