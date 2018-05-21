@@ -121,17 +121,26 @@ gunDamageRoll = [3,3,3,3,3,3,4,3,4,5]
 
 ###
 #gets the fighters for one combat round
+unconsciousPlayers = Array.new
+def getFighters(opponents, unconsciousPlayers)
+  allGood = false
+  until allGood == true do
+    $fighters = Array.new
+    puts ""
+    puts "who's attacking who? (format as [name] attacks [name])"
+    $fighters = gets.chomp
+    $fighters = $fighters.split(" attacks ")
 
-def getFighters(opponents)
-  $fighters = Array.new
-  puts ""
-  puts "who's attacking who? (format as [name] attacks [name])"
-  $fighters = gets.chomp
-  $fighters = $fighters.split(" attacks ")
-
-
-  @attacker = opponents.index($fighters[0])
-  @victim = opponents.index($fighters[1])
+    if unconsciousPlayers.include?($fighters[0])
+      puts "#{$fighters[0]} is unconscious and cannot attack."
+    elsif ($fighters-opponents).length > 0
+      puts "invalid fighters"
+    else
+      @attacker = opponents.index($fighters[0])
+      @victim = opponents.index($fighters[1])
+      allGood = true
+    end
+  end
 end
 
 #gets the weapon for the attacker
@@ -211,8 +220,7 @@ def armorAdvan(playerArmor, armorOptions, weaponOptions, gunOptions, armorDMS)
   @defenseDM = armorDMS[armorSpot][weaponSpot]
 end
 
-
-def damageCheck(weaponOptions, gunOptions, weaponDamageRoll, gunDamageRoll, oppsUpps, opponents)
+def damageCheck(weaponOptions, gunOptions, weaponDamageRoll, gunDamageRoll, oppsUpps, opponents, unconsciousPlayers)
   if weaponOptions.include?(@weapon)
     numDice = weaponDamageRoll[weaponOptions.index(@weapon)]
   else
@@ -235,17 +243,21 @@ def damageCheck(weaponOptions, gunOptions, weaponDamageRoll, gunDamageRoll, opps
   trait = rand(2)
   oppsUpps[@victim][trait] = oppsUpps[@victim][trait].to_i - totalDamage
   puts "#{opponents[@victim]}'s upp now = #{oppsUpps[@victim]}'"
+
+  if oppsUpps[@victim][trait] <= 0
+    unconsciousPlayers << opponents[@victim]
+  end
 end
 
 #roll for accuracy
-def accuracyCheck(weaponOptions, gunOptions, weaponDamageRoll, gunDamageRoll, oppsUpps, opponents)
+def accuracyCheck(weaponOptions, gunOptions, weaponDamageRoll, gunDamageRoll, oppsUpps, opponents, unconsciousPlayers)
   accuracy = 1 + rand(20)
   if accuracy == 20
     puts "rolled a 20 on accuracy check. Yeehaw."
-    damageCheck(weaponOptions, gunOptions, weaponDamageRoll, gunDamageRoll, oppsUpps, opponents)
+    damageCheck(weaponOptions, gunOptions, weaponDamageRoll, gunDamageRoll, oppsUpps, opponents, unconsciousPlayers)
   elsif accuracy >= 8
     puts "rolled #{accuracy} on accuracy check. Hit."
-    damageCheck(weaponOptions, gunOptions, weaponDamageRoll, gunDamageRoll, oppsUpps, opponents)
+    damageCheck(weaponOptions, gunOptions, weaponDamageRoll, gunDamageRoll, oppsUpps, opponents, unconsciousPlayers)
   else
     puts "rolled #{accuracy} on accuracy check. Miss."
   end
@@ -256,14 +268,17 @@ loop do
   puts "begin combat round?"
   roundAnswer = gets.chomp.upcase
   if roundAnswer == "YES"
-    getFighters(opponents)
+    getFighters(opponents, unconsciousPlayers)
     @endurance = oppsUpps[@attacker][1]
     getWeapon(weaponOptions, gunOptions)
     bonusCheck(weaponOptions, oppsUpps, advantageousCheck, advantageousBlow, requiredCheck, tooLowBlow, weakenedBlow, gunOptions, gunAdvantageousCheck, gunAdvantageousShot, gunRequiredCheck, gunTooLowShot)
     armorAdvan(playerArmor, armorOptions, weaponOptions, gunOptions, armorDMS)
-    accuracyCheck(weaponOptions, gunOptions, weaponDamageRoll, gunDamageRoll, oppsUpps, opponents)
-  else
+    accuracyCheck(weaponOptions, gunOptions, weaponDamageRoll, gunDamageRoll, oppsUpps, opponents, unconsciousPlayers)
+    puts unconsciousPlayers
+  elsif roundAnswer == "NO"
     puts "ending combat"
     break
+  else
+    puts "not a valid answer"
   end
 end
